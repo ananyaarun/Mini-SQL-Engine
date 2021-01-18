@@ -31,6 +31,8 @@ def main():
     query = query.strip(";")
     
     q1 = query
+    q6 = query
+    where_q = ""
 
     if "ORDER BY" in query:
 	    q1 = re.split('ORDER BY',query)
@@ -46,18 +48,21 @@ def main():
 	    group_q = q3[1].strip(' ')
 
     else:
-        q4 = query
+        if "ORDER BY" in query:
+            q4 = q2
+        else:
+            q4 = query
         group_q = ""
 
     if "WHERE" in q4:
 	    q5 = re.split('WHERE',q4)
 	    q6 = q5[0].strip(' ')
 	    where_q = q5[1].strip(' ')
-
     else:
-	    q6 = query
-	    where_q = ""
-
+	    if "ORDER BY" in query:
+		    q6 = q2
+	    if "GROUP BY" in query:
+		    q6 = q4
 
     q7 = re.split('FROM',q6)[0].strip(' ')
     select_q = re.split('SELECT',q7)[1].strip(' ')

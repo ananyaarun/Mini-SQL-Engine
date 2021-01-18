@@ -54,15 +54,5 @@ def create_db():
     	tables_data[tables] = temp
 
 
-    print(tables_data)
-    print(tables_info)
-  
-
-create_db()
-
-# def basic_error_chk(query):
-
-
-
-
-# def parse_q(query):
+    # print(tables_data)
+    # print(tables_info)

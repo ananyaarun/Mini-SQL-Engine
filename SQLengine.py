@@ -34,12 +34,17 @@ def get_oper_type(query):
 def eval_without(data,col,val,op):
     
     col_index = 0
-    rows_to_remove = []
+    
     for i in data[0]:
         temp = re.split('.',i)[1].strip(' ')
         if str(temp) == str(col):
-            
-    return
+            col_index = i
+
+    print(col_index)
+    data1 = [v for v in data[1:] if v[col_index] % 2 == 0]
+
+    print(data1)
+    return data1
 
 
 def eval_and(data,col1,val1,op1,col2,val2,op2):
@@ -103,7 +108,8 @@ def process_where(data,query):
         temp = re.split(oper[opertype],query)
         col = temp[0].strip(' ')
         val = temp[1].strip(' ')
-        eval_without(data,col,val,opertype)
+        data = eval_without(data,col,val,opertype)
+        print(data)
 
     elif flag == 1:
 

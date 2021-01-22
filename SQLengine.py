@@ -281,7 +281,6 @@ def process_group (data, query,orig):
                     if temp1 not in temp:
                         temp.append(temp1) 
         grouped_data.append(temp)
-    # print(grouped_data)
 
     fin_gp_data = []
 
@@ -298,7 +297,34 @@ def process_group (data, query,orig):
     for i in fin_gp_data:
         new_dat.append(i)
     return new_dat
-           
+  
+
+def process_order(data,query):
+
+    temp = query.split(' ')
+    col_name = temp[0]
+    typ = temp[1]
+
+    col_index = 0
+    ind = 0
+    for i in data[0]:
+        temp = i.split('.')[1]
+        if str(temp) == str(col_name):
+            col_index = ind
+        ind += 1
+    
+    print(col_name)
+    print(typ)
+    print(col_index)
+    if typ == "ASEC" or typ == "asec":
+        data = sorted(data[1:], key=lambda x : x[col_index])
+    else:
+        data = sorted(data[1:], key=lambda x : x[col_index], reverse = True)
+
+    return data
+    
+
+
 
 def main():
     create_db()
@@ -373,6 +399,12 @@ def main():
 
     if group_q != "":
         data = process_group(data,group_q,query)
+        print(data)
+
+    if order_q != "":
+        print(order_q)
+        print(query)
+        data = process_order(data,order_q)
         print(data)
 
 if __name__ == '__main__':

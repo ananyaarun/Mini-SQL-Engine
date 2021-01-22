@@ -14,6 +14,7 @@ order_q = ""
 dis_flag = 0
 join_table = {}
 oper = {3:"<", 4:">", 1:"<=", 2:">=", 5:"="}
+agg = {3:"sum", 4:"avg", 1:"min", 2:"max", 5:"count"}
 
 
 def get_oper_type(query):
@@ -162,6 +163,19 @@ def join_all(Tnames):
     return data
 
 
+def func_agg_groups(arr,tp):
+    if tp == 1:
+        return sum(arr)
+    elif tp == 2:
+        return sum(arr)/len(arr)
+    elif tp == 3:
+    	return min(arr)
+    elif tp == 4:
+    	return max(arr)
+    elif tp == 5:
+    	return len(arr)
+    
+
 def process_where(data,query):
     flag = 0
     opertype = 0
@@ -216,6 +230,75 @@ def process_where(data,query):
 
     return data
 
+
+def process_group (data, query,orig):
+
+    col_index = 0
+    ind = 0
+    for i in data[0]:
+        temp = i.split('.')[1]
+        if str(temp) == str(query):
+            col_index = ind
+        ind += 1
+
+    agg_type = 0
+    
+    if "sum" in orig or "SUM" in orig:
+        agg_type = 1
+    elif "avg" in orig or "AVG" in orig:
+        agg_type = 2
+    elif "min" in orig or "MIN" in orig:
+        agg_type = 3
+    elif "max" in orig or "MAX" in orig:
+        agg_type = 4
+    elif "count" in orig or "COUNT" in orig:
+        agg_type = 5
+
+    list_uni = []
+    for i in data[1:]:
+        ind = 0
+        for j in i:
+            if ind == col_index and j not in list_uni:
+                list_uni.append(j)
+            ind += 1
+    
+    new_dat = []
+    new_dat.append(data[0])
+    no_cols = len(data[0]);
+    grouped_data = []
+
+    for i in list_uni:
+        temp = []
+        temp1 = {}
+        for j in range(0,no_cols):
+            if j == col_index:
+            	continue
+            for k in range(0,len(data)-1):
+                if data[k+1][col_index] == i:
+                    if j not in temp1.keys():
+                        temp1[j]=[]
+                    temp1[j].append(data[k+1][j])
+                    if temp1 not in temp:
+                        temp.append(temp1) 
+        grouped_data.append(temp)
+    # print(grouped_data)
+
+    fin_gp_data = []
+
+    ind = 0
+    for j in grouped_data:
+        grps = []
+        grps.append(list_uni[ind])
+        ind+=1
+        for k in j:
+       	    for l in k.keys():
+       	        grps.append(func_agg_groups(k[l],agg_type))
+       	fin_gp_data.append(grps)
+
+    for i in fin_gp_data:
+        new_dat.append(i)
+    return new_dat
+           
 
 def main():
     create_db()
@@ -285,9 +368,12 @@ def main():
     if where_q != "":
         data = process_where(data,where_q)
         print(data)
+        print(" ")
+        print(" ")
+
     if group_q != "":
-        data = process_group(data, group_q)
-   
+        data = process_group(data,group_q,query)
+        print(data)
 
 if __name__ == '__main__':
     main()

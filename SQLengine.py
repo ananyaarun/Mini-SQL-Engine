@@ -365,7 +365,31 @@ def process_order(data,query):
 
 
 def process_select(data, query):
-    print(query)
+    if query == '*':
+        return data
+
+    cols = query.strip(' ').split(',')
+    col = []
+    for i in cols:
+        col.append(i.strip(' '))
+    
+    col_index = []
+    for j in col:
+        ind = 0
+        for i in data[0]:
+            temp = i.split('.')[1]
+            if str(temp) == str(j):
+                col_ind = ind
+            ind += 1
+        col_index.append(col_ind)
+
+    fin=[]
+    # print(col_index)
+    # print(data)
+    # print([row[0] for row in data])
+    for i in col_index:
+        fin.append([row[i] for row in data])
+    print(fin)
 
 def main():
     create_db()

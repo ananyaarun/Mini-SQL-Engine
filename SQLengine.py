@@ -65,15 +65,22 @@ def eval_without(data,col,val,op):
     # DO ERROR HANDLING - DONT FORGET !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # example if col not found etc etc
     col_index = 0
+    col_if = 0
     ind = 0
     chk = 0
     for i in data[0]:
         temp = i.split('.')[1]
         if str(temp) == str(col):
             col_index = ind
+        if str(temp) == str(val):
+            col_if = ind
+            chk = 1
         ind += 1
 
-    data1 = [v for v in data[1:] if test_cond(v[col_index],op,val)]
+    if chk == 0:
+        data1 = [v for v in data[1:] if test_cond(v[col_index],op,val)]
+    elif chk == 1:
+        data1 = [v for v in data[1:] if test_cond(v[col_index],op,v[col_if])]
     
     final = []
     final.append(data[0])
@@ -87,7 +94,11 @@ def eval_and(data,col1,val1,op1,col2,val2,op2):
     
     col_index1 = 0
     col_index2 = 0
+    col_if1 = 0
+    col_if2 = 0
     ind = 0
+    chk1 = 0
+    chk2 = 0
 
     for i in data[0]:
         temp = i.split('.')[1]
@@ -95,10 +106,22 @@ def eval_and(data,col1,val1,op1,col2,val2,op2):
             col_index1 = ind
         if str(temp) == str(col2):
             col_index2 = ind
+        if str(temp) == str(val1):
+            col_if1 = ind
+            chk1 = 1
+        if str(temp) == str(val2):
+            col_if2 = ind
+            chk2 = 1
         ind += 1
 
-
-    data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) and test_cond(v[col_index2],op2,val2)]
+    if chk1 ==0 and chk2 == 0:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) and test_cond(v[col_index2],op2,val2)]
+    elif chk1 ==0 and chk2 == 1:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) and test_cond(v[col_index2],op2,v[col_if2])]
+    elif chk1 ==1 and chk2 == 0:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,v[col_if1]) and test_cond(v[col_index2],op2,val2)]
+    elif chk1 ==1 and chk2 == 1:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,v[col_if1]) and test_cond(v[col_index2],op2,v[col_if2])]
     
     final = []
     final.append(data[0])
@@ -112,7 +135,11 @@ def eval_or(data,col1,val1,op1,col2,val2,op2):
     
     col_index1 = 0
     col_index2 = 0
+    col_if1 = 0
+    col_if2 = 0
     ind = 0
+    chk1 = 0
+    chk2 = 0
 
     for i in data[0]:
         temp = i.split('.')[1]
@@ -120,9 +147,22 @@ def eval_or(data,col1,val1,op1,col2,val2,op2):
             col_index1 = ind
         if str(temp) == str(col2):
             col_index2 = ind
+        if str(temp) == str(val1):
+            col_if1 = ind
+            chk1 = 1
+        if str(temp) == str(val2):
+            col_if2 = ind
+            chk2 = 1
         ind += 1
 
-    data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) or test_cond(v[col_index2],op2,val2)]
+    if chk1 ==0 and chk2 == 0:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) or test_cond(v[col_index2],op2,val2)]
+    elif chk1 ==0 and chk2 == 1:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) or test_cond(v[col_index2],op2,v[col_if2])]
+    elif chk1 ==1 and chk2 == 0:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,v[col_if1]) or test_cond(v[col_index2],op2,val2)]
+    elif chk1 ==1 and chk2 == 1:
+        data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,v[col_if1]) or test_cond(v[col_index2],op2,v[col_if2])]
     
     final = []
     final.append(data[0])
@@ -322,9 +362,10 @@ def process_order(data,query):
         data = sorted(data[1:], key=lambda x : x[col_index], reverse = True)
 
     return data
-    
 
 
+def process_select(data, query):
+    print(query)
 
 def main():
     create_db()
@@ -401,6 +442,9 @@ def main():
         data = process_group(data,group_q,query)
         print(data)
 
+    if select_q != "":
+        process_select(data,select_q)
+    
     if order_q != "":
         print(order_q)
         print(query)

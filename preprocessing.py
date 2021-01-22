@@ -25,7 +25,7 @@ def create_db():
     			tab_name = lines[ptr].strip()
     			chk = 0
     		else:
-    		    print(lines[ptr].strip())
+    		    # print(lines[ptr].strip())
     		    temp.append(lines[ptr].strip())
     		ptr+=1
 

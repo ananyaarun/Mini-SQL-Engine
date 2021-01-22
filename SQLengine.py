@@ -31,36 +31,104 @@ def get_oper_type(query):
     return opertype
 
 
+def test_cond(row_val, op, exp_val):
+    if op == 1:
+        if row_val <= int(exp_val):
+            return True
+        else:
+            return False
+    elif op == 2:
+        if row_val >= int(exp_val):
+            return True
+        else:
+            return False
+    elif op == 3:
+        if row_val < int(exp_val):
+            return True
+        else:
+            return False
+    elif op == 4:
+        if row_val > int(exp_val):
+            return True
+        else:
+            return False
+    elif op == 5:
+        if row_val == int(exp_val):
+            return True
+        else:
+            return False
+
+
+
 def eval_without(data,col,val,op):
-    
+    # DO ERROR HANDLING - DONT FORGET !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # example if col not found etc etc
     col_index = 0
-    
+    ind = 0
+    chk = 0
     for i in data[0]:
-        temp = re.split('.',i)[1].strip(' ')
+        temp = i.split('.')[1]
         if str(temp) == str(col):
-            col_index = i
+            col_index = ind
+        ind += 1
 
-    print(col_index)
-    data1 = [v for v in data[1:] if v[col_index] % 2 == 0]
+    data1 = [v for v in data[1:] if test_cond(v[col_index],op,val)]
+    
+    final = []
+    final.append(data[0])
+    for i in data1:
+        final.append(i)
 
-    print(data1)
-    return data1
+    return final
 
 
 def eval_and(data,col1,val1,op1,col2,val2,op2):
-    print(col1)
-    print(val1)
-    print(col2)
-    print(val2)
-    return
+    
+    col_index1 = 0
+    col_index2 = 0
+    ind = 0
+
+    for i in data[0]:
+        temp = i.split('.')[1]
+        if str(temp) == str(col1):
+            col_index1 = ind
+        if str(temp) == str(col2):
+            col_index2 = ind
+        ind += 1
+
+
+    data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) and test_cond(v[col_index2],op2,val2)]
+    
+    final = []
+    final.append(data[0])
+    for i in data1:
+        final.append(i)
+
+    return final
 
 
 def eval_or(data,col1,val1,op1,col2,val2,op2):
-    print(col1)
-    print(val1)
-    print(col2)
-    print(val2)
-    return
+    
+    col_index1 = 0
+    col_index2 = 0
+    ind = 0
+
+    for i in data[0]:
+        temp = i.split('.')[1]
+        if str(temp) == str(col1):
+            col_index1 = ind
+        if str(temp) == str(col2):
+            col_index2 = ind
+        ind += 1
+
+    data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) or test_cond(v[col_index2],op2,val2)]
+    
+    final = []
+    final.append(data[0])
+    for i in data1:
+        final.append(i)
+
+    return final
 
 
 def join_tabs(tab1, tab2):
@@ -109,7 +177,6 @@ def process_where(data,query):
         col = temp[0].strip(' ')
         val = temp[1].strip(' ')
         data = eval_without(data,col,val,opertype)
-        print(data)
 
     elif flag == 1:
 
@@ -127,7 +194,7 @@ def process_where(data,query):
         col2 = temp[0].strip(' ')
         val2 = temp[1].strip(' ')
 
-        eval_and(data,col1,val1,opertype1,col2,val2,opertype2)
+        data = eval_and(data,col1,val1,opertype1,col2,val2,opertype2)
 
     elif flag == 2:
 
@@ -145,8 +212,10 @@ def process_where(data,query):
         col2 = temp[0].strip(' ')
         val2 = temp[1].strip(' ')
 
-        eval_or(data,col1,val1,opertype1,col2,val2,opertype2)
-    
+        data = eval_or(data,col1,val1,opertype1,col2,val2,opertype2)
+
+    return data
+
 
 def main():
     create_db()
@@ -206,21 +275,18 @@ def main():
     select_q = re.split('SELECT',q7)[1].strip(' ')
     from_q = re.split('FROM',q6)[1].strip(' ')
 
-    print("Debugggginggg")
-    print(select_q)
-    print(from_q)
-    print(where_q)
-    print(group_q)
-    print(order_q)
-
     # processing from - finding join 
     Tnames = [T.strip(' ') for T in from_q.split(',')]
     data = join_all(Tnames)
     print(data)
+    print("data after query")
+    print(" ")
     # order to evaluate in - from where groupby select distinct orderby
     if where_q != "":
-        process_where(data,where_q)
-    
+        data = process_where(data,where_q)
+        print(data)
+    if group_q != "":
+        data = process_group(data, group_q)
    
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ def show_error(type):
 	    print("Invalid! Query syntax incorrect.")
 	    exit(0)
     elif type == 3:
-	    print("Sorry! Database/Table does not exist.")
+	    print("Sorry! Database/Table column does not exist.")
 	    exit(0)
     elif type == 4:
 	    print("Invalid! group by Query .")

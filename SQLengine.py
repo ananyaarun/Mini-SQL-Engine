@@ -62,9 +62,7 @@ def test_cond(row_val, op, exp_val):
 
 
 def eval_without(data,col,val,op):
-    # DO ERROR HANDLING - DONT FORGET !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # example if col not found etc etc
-    col_index = 0
+    col_index = -1
     col_if = 0
     ind = 0
     chk = 0
@@ -77,6 +75,8 @@ def eval_without(data,col,val,op):
             chk = 1
         ind += 1
 
+    if col_index == -1:
+        show_error(3)
     if chk == 0:
         data1 = [v for v in data[1:] if test_cond(v[col_index],op,val)]
     elif chk == 1:
@@ -92,8 +92,8 @@ def eval_without(data,col,val,op):
 
 def eval_and(data,col1,val1,op1,col2,val2,op2):
     
-    col_index1 = 0
-    col_index2 = 0
+    col_index1 = -1
+    col_index2 = -1
     col_if1 = 0
     col_if2 = 0
     ind = 0
@@ -114,6 +114,8 @@ def eval_and(data,col1,val1,op1,col2,val2,op2):
             chk2 = 1
         ind += 1
 
+    if col_index1 == -1 or col_index2 == -1:
+        show_error(3)
     if chk1 ==0 and chk2 == 0:
         data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) and test_cond(v[col_index2],op2,val2)]
     elif chk1 ==0 and chk2 == 1:
@@ -133,8 +135,8 @@ def eval_and(data,col1,val1,op1,col2,val2,op2):
 
 def eval_or(data,col1,val1,op1,col2,val2,op2):
     
-    col_index1 = 0
-    col_index2 = 0
+    col_index1 = -1
+    col_index2 = -1
     col_if1 = 0
     col_if2 = 0
     ind = 0
@@ -155,6 +157,8 @@ def eval_or(data,col1,val1,op1,col2,val2,op2):
             chk2 = 1
         ind += 1
 
+    if col_index1 == -1 or col_index2 == -1:
+        show_error(3)
     if chk1 ==0 and chk2 == 0:
         data1 = [v for v in data[1:] if test_cond(v[col_index1],op1,val1) or test_cond(v[col_index2],op2,val2)]
     elif chk1 ==0 and chk2 == 1:
@@ -194,6 +198,8 @@ def join_all(Tnames):
 
     data = []
     for name in Tnames:
+        if name not in tables_info.keys():
+            show_error(3)
         col_names = [name + '.' + s for s in tables_info[name]]
         tmp_table = [col_names] + tables_data[name]
         if data == []:
@@ -409,12 +415,16 @@ def process_select_new(data,query):
     col = []
     
     chkflg = 0
-
+    anan = 0
     for i in cols:
+        # print(str(anan) + " " +str(i)+ " " + str(chkflg))
+        if anan>0 and chkflg==0 and '(' in i:
+            show_error(2)
         if '(' in i:
             chkflg = 1
         if chkflg == 1 and '(' not in i:
             show_error(2)
+        anan+=1
 
     if chkflg == 1:
         ans = []
@@ -459,6 +469,7 @@ def process_select_new(data,query):
 
 	    # print(col)
 	    col_index = []
+	    col_ind = -1
 	    for j in col:
 	        ind = 0
 	        for i in data[0]:
@@ -466,8 +477,16 @@ def process_select_new(data,query):
 	            if str(temp) == str(j):
 	                col_ind = ind
 	            ind += 1
-	        col_index.append(col_ind)
+	        if col_ind != -1:
+	            col_index.append(col_ind)
 
+
+	    if col_ind==-1:
+	        show_error(3)
+        
+
+        
+	    
 	    fin=[]
 	    
 	    for i in col_index:
@@ -502,6 +521,7 @@ def process_select(data, query):
 
     # print(col)
     col_index = []
+    col_ind = -1
     for j in col:
         ind = 0
         for i in data[0]:
@@ -509,9 +529,12 @@ def process_select(data, query):
             if str(temp) == str(j):
                 col_ind = ind
             ind += 1
-        col_index.append(col_ind)
+        if col_ind != -1 :
+            col_index.append(col_ind)
 
     fin=[]
+    if col_ind==-1:
+        show_error(3)
     
     for i in col_index:
         fin.append([row[i] for row in data])
@@ -529,7 +552,7 @@ def process_select(data, query):
 def main():
     create_db()
     query = sys.argv[1]
-    
+    # print(query)
     query = sqlparse.format(query, keyword_case = 'upper')
     
     if ";" not in query:
@@ -634,7 +657,12 @@ def main():
     # print(data)
     
     for i in range(0,len(data)):
-        print(data[i])
+        for j in range(0,len(data[i])):
+            if j == len(data[i])-1:
+                print(data[i][j],end=" ")
+            else:
+                print(data[i][j], end=",")
+        print('')
 
 if __name__ == '__main__':
     main()

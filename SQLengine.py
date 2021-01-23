@@ -214,6 +214,8 @@ def func_agg_groups(arr,tp):
     	return max(arr)
     elif tp == 5:
     	return len(arr)
+    else:
+    	return arr
     
 
 def process_where(data,query):
@@ -270,6 +272,42 @@ def process_where(data,query):
 
     return data
 
+def get_agg_type(orig):
+    agg_type = 0
+    if "sum" in orig: 
+        agg_type = 1
+    if "avg" in orig:
+        agg_type = 2
+    if "min" in orig: 
+        agg_type = 3
+    if "max" in orig: 
+        agg_type = 4
+    if "count" in orig:
+        agg_type = 5
+    # print(agg_type)
+    return agg_type
+
+def modify_func(data,orig):
+    new_data = []
+    for i in data:
+        nam = i.split('.')
+        ini = nam[0]
+        nam = nam[1]
+        if "sum("+str(nam)+")" in orig or "SUM("+str(nam)+")" in orig:
+            new_data.append(str(ini)+".sum("+str(nam)+")")
+        elif "avg("+str(nam)+")" in orig or "AVG("+str(nam)+")" in orig:
+            new_data.append(str(ini)+".avg("+str(nam)+")")
+        elif "min("+str(nam)+")" in orig or "MIN("+str(nam)+")" in orig:
+            new_data.append(str(ini)+".min("+str(nam)+")")
+        elif "max("+str(nam)+")" in orig or "MAX("+str(nam)+")" in orig:
+            new_data.append(str(ini)+".max("+str(nam)+")")
+        elif "count("+str(nam)+")" in orig or "COUNT("+str(nam)+")" in orig:
+            new_data.append(str(ini)+".count("+str(nam)+")")
+        else:
+            new_data.append(i) 
+    
+    return new_data
+
 
 def process_group (data, query,orig):
 
@@ -281,19 +319,6 @@ def process_group (data, query,orig):
             col_index = ind
         ind += 1
 
-    agg_type = 0
-    
-    if "sum" in orig or "SUM" in orig:
-        agg_type = 1
-    elif "avg" in orig or "AVG" in orig:
-        agg_type = 2
-    elif "min" in orig or "MIN" in orig:
-        agg_type = 3
-    elif "max" in orig or "MAX" in orig:
-        agg_type = 4
-    elif "count" in orig or "COUNT" in orig:
-        agg_type = 5
-
     list_uni = []
     for i in data[1:]:
         ind = 0
@@ -303,9 +328,11 @@ def process_group (data, query,orig):
             ind += 1
     
     new_dat = []
-    new_dat.append(data[0])
+    new_dat.append(modify_func(data[0],orig))
+    print(new_dat)
     no_cols = len(data[0]);
     grouped_data = []
+    agg_type = 0
 
     for i in list_uni:
         temp = []
@@ -331,7 +358,7 @@ def process_group (data, query,orig):
         ind+=1
         for k in j:
        	    for l in k.keys():
-       	        grps.append(func_agg_groups(k[l],agg_type))
+       	        grps.append(func_agg_groups(k[l],get_agg_type(new_dat[0][l])))
        	fin_gp_data.append(grps)
 
     for i in fin_gp_data:
@@ -353,13 +380,10 @@ def process_order(data,query):
             col_index = ind
         ind += 1
     
-    print(col_name)
-    print(typ)
-    print(col_index)
-    if typ == "ASEC" or typ == "asec":
-        data = sorted(data[1:], key=lambda x : x[col_index])
+    if typ == "DESC" or typ == "desc":
+        data = sorted(data[1:], key=lambda x : x[col_index],reverse = True)
     else:
-        data = sorted(data[1:], key=lambda x : x[col_index], reverse = True)
+        data = sorted(data[1:], key=lambda x : x[col_index])
 
     return data
 
@@ -371,8 +395,14 @@ def process_select(data, query):
     cols = query.strip(' ').split(',')
     col = []
     for i in cols:
-        col.append(i.strip(' '))
-    
+        i=i.strip(' ')
+        if '(' in i:
+            temp = i.split('(')
+            col.append(str(temp[0].lower())+"("+str(temp[1]))
+        else:
+            col.append(i)
+            
+    # print(col)
     col_index = []
     for j in col:
         ind = 0
@@ -384,12 +414,19 @@ def process_select(data, query):
         col_index.append(col_ind)
 
     fin=[]
-    # print(col_index)
-    # print(data)
-    # print([row[0] for row in data])
+    
     for i in col_index:
         fin.append([row[i] for row in data])
-    print(fin)
+
+    finn = []
+    finnn = []
+
+    for i in range(0,len(fin[0])):
+        finn = []
+        for j in range(0,len(fin)):
+            finn.append(fin[j][i])
+        finnn.append(finn)
+    return finnn
 
 def main():
     create_db()
@@ -452,28 +489,37 @@ def main():
     # processing from - finding join 
     Tnames = [T.strip(' ') for T in from_q.split(',')]
     data = join_all(Tnames)
-    print(data)
-    print("data after query")
-    print(" ")
+   
+    # print(data)
+    
     # order to evaluate in - from where groupby select distinct orderby
+   
     if where_q != "":
         data = process_where(data,where_q)
-        print(data)
-        print(" ")
-        print(" ")
 
     if group_q != "":
         data = process_group(data,group_q,query)
         print(data)
-
     if select_q != "":
-        process_select(data,select_q)
+        print(select_q)
+        dis_flag = 0        
+        if "DISTINCT" in select_q:
+            dis_flag = 1
+            select_q = select_q.replace('DISTINCT','').strip(' ')
+        data = process_select(data,select_q)
+        if dis_flag == 1:
+            temp = []
+            for i in data:
+                if i not in temp:
+                    temp.append(i)
+            data = temp
     
     if order_q != "":
-        print(order_q)
-        print(query)
         data = process_order(data,order_q)
-        print(data)
+
+
+    # print("final")
+    print(data)
 
 if __name__ == '__main__':
     main()

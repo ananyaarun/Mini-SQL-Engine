@@ -204,6 +204,8 @@ def join_all(Tnames):
 
 
 def func_agg_groups(arr,tp):
+    # print(arr)
+    # print(tp)
     if tp == 1:
         return sum(arr)
     elif tp == 2:
@@ -329,7 +331,7 @@ def process_group (data, query,orig):
     
     new_dat = []
     new_dat.append(modify_func(data[0],orig))
-    print(new_dat)
+    # print(new_dat)
     no_cols = len(data[0]);
     grouped_data = []
     agg_type = 0
@@ -368,9 +370,13 @@ def process_group (data, query,orig):
 
 def process_order(data,query):
 
-    temp = query.split(' ')
-    col_name = temp[0]
-    typ = temp[1]
+    if "ASEC" in query or "asec" in query or "DESC" in query or "desc" in query:
+        temp = query.split(' ')
+        col_name = temp[0]
+        typ = temp[1]
+    else:
+    	typ = "ASEC"
+    	col_name = query
 
     col_index = 0
     ind = 0
@@ -380,12 +386,104 @@ def process_order(data,query):
             col_index = ind
         ind += 1
     
+    nndata=[]
+    nndata.append(data[0])
+    
     if typ == "DESC" or typ == "desc":
-        data = sorted(data[1:], key=lambda x : x[col_index],reverse = True)
+        ndata = sorted(data[1:], key=lambda x : x[col_index],reverse = True)
     else:
-        data = sorted(data[1:], key=lambda x : x[col_index])
+        ndata = sorted(data[1:], key=lambda x : x[col_index])
 
-    return data
+    for i in ndata:
+        nndata.append(i)
+    return nndata
+
+
+def process_select_new(data,query):
+    if query == '*':
+        return data
+
+    aa = ["sum","SUM","avg","AVG","min","MIN","max","MAX","count","COUNT"]
+
+    cols = query.strip(' ').split(',')
+    col = []
+    
+    chkflg = 0
+
+    for i in cols:
+        if '(' in i:
+            chkflg = 1
+        if chkflg == 1 and '(' not in i:
+            show_error(2)
+
+    if chkflg == 1:
+        ans = []
+        for i in cols:
+	        at = 0
+	        wordd = i.split('(')
+	        temp = wordd[1].split(')')[0]
+	        wordd = wordd[0]
+	        if wordd.lower() == "sum":
+	            at = 1
+	        elif wordd.lower() == "avg":
+	            at = 2
+	        elif wordd.lower() == "min":
+	            at = 3
+	        elif wordd.lower() == "max":
+	            at = 4
+	        elif wordd.lower() == "count":
+	            at = 5
+
+	        ind = 0
+	        for i in data[0]:
+		        tempp = i.split('.')[1]
+		        if str(tempp) == str(temp):
+		            col_ind = ind
+		        ind += 1
+	        
+	        new_data=[]
+	        new_data.append(str(wordd.lower())+"("+str(temp)+")")
+	        arr = [row[col_ind] for row in data[1:]]
+	        new_data.append(func_agg_groups(arr,at))
+	        ans.append(new_data)
+        return ans
+
+    if chkflg == 0:
+	    for i in cols:
+	        i=i.strip(' ')
+	        if '(' in i:
+	            temp = i.split('(')
+	            col.append(str(temp[0].lower())+"("+str(temp[1]))
+	        else:
+	            col.append(i)
+
+	    # print(col)
+	    col_index = []
+	    for j in col:
+	        ind = 0
+	        for i in data[0]:
+	            temp = i.split('.')[1]
+	            if str(temp) == str(j):
+	                col_ind = ind
+	            ind += 1
+	        col_index.append(col_ind)
+
+	    fin=[]
+	    
+	    for i in col_index:
+	        fin.append([row[i] for row in data])
+
+	    finn = []
+	    finnn = []
+
+	    for i in range(0,len(fin[0])):
+	        finn = []
+	        for j in range(0,len(fin)):
+	            finn.append(fin[j][i])
+	        finnn.append(finn)
+	    return finnn
+
+
 
 
 def process_select(data, query):
@@ -401,7 +499,7 @@ def process_select(data, query):
             col.append(str(temp[0].lower())+"("+str(temp[1]))
         else:
             col.append(i)
-            
+
     # print(col)
     col_index = []
     for j in col:
@@ -499,27 +597,44 @@ def main():
 
     if group_q != "":
         data = process_group(data,group_q,query)
-        print(data)
+        # print(data)
     if select_q != "":
-        print(select_q)
-        dis_flag = 0        
-        if "DISTINCT" in select_q:
-            dis_flag = 1
-            select_q = select_q.replace('DISTINCT','').strip(' ')
-        data = process_select(data,select_q)
-        if dis_flag == 1:
-            temp = []
-            for i in data:
-                if i not in temp:
-                    temp.append(i)
-            data = temp
+        # print(select_q)
+
+        if group_q == "":
+            dis_flag = 0        
+            if "DISTINCT" in select_q:
+                dis_flag = 1
+                select_q = select_q.replace('DISTINCT','').strip(' ')
+            data = process_select_new(data,select_q)
+            if dis_flag == 1:
+                temp = []
+                for i in data:
+                    if i not in temp:
+                        temp.append(i)
+                data = temp
+
+        else:
+            dis_flag = 0        
+            if "DISTINCT" in select_q:
+                dis_flag = 1
+                select_q = select_q.replace('DISTINCT','').strip(' ')
+            data = process_select(data,select_q)
+            if dis_flag == 1:
+                temp = []
+                for i in data:
+                    if i not in temp:
+                        temp.append(i)
+                data = temp
     
     if order_q != "":
         data = process_order(data,order_q)
 
 
-    # print("final")
-    print(data)
+    # print(data)
+    
+    for i in range(0,len(data)):
+        print(data[i])
 
 if __name__ == '__main__':
     main()
